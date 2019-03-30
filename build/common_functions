@@ -8,7 +8,7 @@ DEPS_DIR=$RDM_DIR/3rdparty/
 
 function build_breakpad {
     cd $DEPS_DIR/gbreakpad/
-    git clone --depth 1 -v https://chromium.googlesource.com/linux-syscall-support src/third_party/lss || true
+    git clone --depth 1 -v https://github.com/RedisDesktop/linux-syscall-support.git src/third_party/lss || true
     if [ ! -d "src/third_party/lss" ]; then
         echo "Cannot clone linux-syscall-support repo"
         exit 2
@@ -19,20 +19,8 @@ function build_breakpad {
 }
 
 function build_libssh2 {
-    if [ ! -f /usr/local/lib/libssh2.a ]; then
-        cd $DEPS_DIR
-        git clone https://github.com/libssh2/libssh2.git libssh2 || true
-        if [ ! -d "libssh2" ]; then
-            echo "Cannot clone libssh2 repo"
-            exit 2
-        fi
-        cd libssh2
-        rm -fR ./bin || true
-        mkdir bin
-        cd bin
-        cmake -DCRYPTO_BACKEND=OpenSSL -DENABLE_ZLIB_COMPRESSION=ON ..
-        cmake --build .
-        sudo make install
+    if [ -d "$DEPS_DIR/qredisclient/3rdparty/qsshclient" ]; then
+        pushd $DEPS_DIR/qredisclient/3rdparty/qsshclient && ./configure && popd
     fi
 }
 

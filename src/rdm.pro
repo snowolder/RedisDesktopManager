@@ -14,11 +14,10 @@ TEMPLATE = app
     DEFINES += RDM_VERSION=\\\"0.9.999\\\"
 }
 
-DEFINES += CORE_LIBRARY ELPP_QT_LOGGING ELPP_STL_LOGGING ELPP_DISABLE_DEFAULT_CRASH_HANDLING
-
 SOURCES += \
     $$PWD/main.cpp \
     $$PWD/app/app.cpp \
+    $$PWD/app/events.cpp \
     $$PWD/app/qmlutils.cpp \
     $$PWD/app/models/*.cpp \
     $$PWD/app/models/key-models/*.cpp \
@@ -34,7 +33,7 @@ SOURCES += \
 
 HEADERS  += \
     $$PWD/app/app.h \
-    $$PWD/app/logger.h \
+    $$PWD/app/events.h \    
     $$PWD/app/qmlutils.h \
     $$PWD/app/models/*.h \
     $$PWD/app/models/key-models/*.h \
@@ -91,7 +90,7 @@ unix:macx { # OSX
 
 unix:!macx { # ubuntu & debian
     CONFIG += static release
-    CONFIG -= debug    
+    CONFIG -= debug
 
     QTPLUGIN += qsvg qsvgicon
 
@@ -101,13 +100,25 @@ unix:!macx { # ubuntu & debian
     debug:   DESTDIR = $$PWD/../bin/linux/debug
 
     #deployment
-    target.path = /usr/share/redis-desktop-manager/bin
-    target.files = $$DESTDIR/rdm $$DESTDIR/crashreporter  $$PWD/resources/qt.conf  $$PWD/resources/rdm.png $$PWD/resources/rdm.sh
+    LINUX_INSTALL_PATH = /opt/redis-desktop-manager
+    
+    target.path = $$LINUX_INSTALL_PATH
+    target.files = $$DESTDIR/rdm $$DESTDIR/crashreporter $$PWD/resources/rdm.sh
     INSTALLS += target
-
-    data.path = /usr/share/redis-desktop-manager/lib
+    
+    exists( $$PWD/resources/qt.conf ) {
+       appconfig.path = $$LINUX_INSTALL_PATH
+       appconfig.files = $$PWD/resources/qt.conf
+       INSTALLS += appconfig
+    }
+    
+    data.path = $$LINUX_INSTALL_PATH/lib
     data.files = $$PWD/lib/*
     INSTALLS += data
+
+    appicon.path = /usr/share/pixmaps/
+    appicon.files = $$PWD/resources/rdm.png
+    INSTALLS += appicon
 
     deskicon.path = /usr/share/applications
     deskicon.files =  $$PWD/resources/rdm.desktop
@@ -127,7 +138,12 @@ RESOURCES += \
     $$PWD/resources/images.qrc \
     $$PWD/resources/fonts.qrc \    
     $$PWD/qml/qml.qrc \
-    $$PWD/resources/tr.qrc \
+    $$PWD/resources/commands.qrc
+
+exists( $$PWD/resources/translations/rdm.qm ) {
+    message("Translations found")
+    RESOURCES += $$PWD/resources/tr.qrc
+}
 
 OTHER_FILES += \
     qt.conf \
@@ -151,6 +167,7 @@ lupdate_only{
 TRANSLATIONS = \
     $$PWD/resources/translations/rdm.ts \
     $$PWD/resources/translations/rdm_zh_CN.ts \
-    $$PWD/resources/translations/rdm_zh_TW.ts
+    $$PWD/resources/translations/rdm_zh_TW.ts \
+    $$PWD/resources/translations/rdm_ru_RU.ts \
 
 CODECFORSRC = UTF-8

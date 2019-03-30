@@ -55,6 +55,8 @@ if [ "$os_VENDOR" == "Ubuntu" ] || [ "$os_VENDOR" == "LinuxMint" ] || [ "$os_VEN
             ubuntu_ver="14"
         elif [ "$ubuntu_ver" == "18" ]; then
             ubuntu_ver="16"
+        elif [ "$ubuntu_ver" == "19" ]; then
+            ubuntu_ver="18"
         else
             echo "RedisDesktopManager only supports linux mint >=17."
             exit 1
@@ -77,7 +79,7 @@ if [ "$os_VENDOR" == "Ubuntu" ] || [ "$os_VENDOR" == "LinuxMint" ] || [ "$os_VEN
         sudo apt-get install qt5-default qtdeclarative5-dev libqt5charts5-dev \
              qml-module-qtquick-controls qml-module-qtquick-controls2 qml-module-qt-labs-settings \
              qml-module-qtquick-dialogs qml-module-qtquick-layouts qml-module-qt-labs-folderlistmodel \
-             qml-module-qtqml-models2 qml-module-qtcharts -y
+             qml-module-qtqml-models2 qml-module-qtcharts libssl1.0-dev -y
     elif [ ! -f /opt/qt${RDM_QT_BRANCH}/bin/qt${RDM_QT_BRANCH}-env.sh ]; then
         print_title "Install Qt ${RDM_QT_VERSION} from ppa"
 
@@ -90,11 +92,12 @@ if [ "$os_VENDOR" == "Ubuntu" ] || [ "$os_VENDOR" == "LinuxMint" ] || [ "$os_VEN
         sudo apt-get update -y
         sudo apt-get install qt${RDM_QT_BRANCH}base qt${RDM_QT_BRANCH}imageformats qt${RDM_QT_BRANCH}tools \
             qt${RDM_QT_BRANCH}declarative qt${RDM_QT_BRANCH}quickcontrols qt${RDM_QT_BRANCH}quickcontrols2 qt${RDM_QT_BRANCH}charts-no-lgpl qt${RDM_QT_BRANCH}svg -y
+            
+        sudo apt-get install libssl-dev libgl1-mesa-dev -y    
     fi
 
-    print_title "Check deps"
-    sudo apt-get install automake libtool libssl-dev \
-        libssh2-1-dev g++ libgl1-mesa-dev cmake zlib1g-dev -y
+    print_title "Install packages required by 3rdparty deps"
+    sudo apt-get install automake libtool cmake -y
 
     build_breakpad
     build_libssh2
@@ -138,10 +141,13 @@ elif [ "$os_VENDOR" == "openSUSE" ]; then
 elif [[ $OSTYPE == darwin* ]]; then
     cd $DEPS_DIR
     find gbreakpad -type d -exec chmod 755 {} + && cd gbreakpad
-    xcodebuild -quiet -sdk macosx -project src/client/mac/Breakpad.xcodeproj -configuration Release -target Breakpad -xcconfig ../../src/gbreakpad.xcconfig ARCHS=x86_64
-    xcodebuild -quiet -sdk macosx -project src/client/mac/Breakpad.xcodeproj -configuration Release -target Breakpad -xcconfig ../../src/gbreakpad.xcconfig install DSTROOT=$DEPS_DIR/../bin/osx INSTALL_PATH=/Frameworks ARCHS=x86_64
-    xcodebuild -quiet -sdk macosx -project src/client/mac/Breakpad.xcodeproj -configuration Release -target Breakpad -xcconfig ../../src/gbreakpad.xcconfig install DSTROOT=$DEPS_DIR/../bin INSTALL_PATH=/Frameworks ARCHS=x86_64
-    brew upgrade libssh2 || brew install libssh2 || true
+    xcodebuild -quiet -sdk macosx -project src/client/mac/Breakpad.xcodeproj -configuration Release -target Breakpad -xcconfig ../../src/gbreakpad.xcconfig ARCHS=x86_64 -UseModernBuildSystem=NO
+    xcodebuild -quiet -sdk macosx -project src/client/mac/Breakpad.xcodeproj -configuration Release -target Breakpad -xcconfig ../../src/gbreakpad.xcconfig install DSTROOT=$DEPS_DIR/../bin/osx INSTALL_PATH=/Frameworks ARCHS=x86_64 -UseModernBuildSystem=NO
+    xcodebuild -quiet -sdk macosx -project src/client/mac/Breakpad.xcodeproj -configuration Release -target Breakpad -xcconfig ../../src/gbreakpad.xcconfig install DSTROOT=$DEPS_DIR/../bin INSTALL_PATH=/Frameworks ARCHS=x86_64 -UseModernBuildSystem=NO
+    cd ..
+    brew upgrade openssl || brew install openssl || true
+    export OPENSSL_ROOT_DIR=/usr/local/opt/openssl/
+    build_libssh2    
 else
-    echo "Your operational system is not supported!"
+    echo "Your operating system is not supported!"
 fi
